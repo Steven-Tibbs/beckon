@@ -22,3 +22,9 @@ narration/
 .idea/
 *.swp
 .DS_Store
+
+# makepkg build output
+packaging/src/
+packaging/pkg/
+packaging/*.pkg.tar.*
+packaging/beckon-git/

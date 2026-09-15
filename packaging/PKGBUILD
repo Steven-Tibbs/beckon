@@ -1,0 +1,63 @@
+# Maintainer: Steven-Tibbs <163689827+Steven-Tibbs@users.noreply.github.com>
+
+# A VCS package on purpose. Beckon's repo carries exactly one commit that is
+# amended and force-pushed, so a release tarball's checksum would change under
+# every push and a tag would pin a tree that no longer exists. Building from the
+# branch is the honest fit, and `yay -Syu` then keeps everyone current.
+
+pkgname=beckon-git
+pkgver=r1.0000000
+pkgrel=1
+pkgdesc="Voice control for Omarchy via the Gemini Live API"
+arch=('any')
+url="https://github.com/Steven-Tibbs/beckon"
+license=('MIT')
+depends=(
+  'python'
+  'python-websockets'
+  'python-sounddevice'
+  'python-google-genai'
+  'wtype'
+  'grim'
+  'wl-clipboard'
+  'libnotify'
+)
+optdepends=(
+  'ydotool: mouse clicks and pressing your real keyboard shortcuts'
+  'python-gobject: read a page or email in full without scrolling'
+  'at-spi2-core: the accessibility bus that publishes that text'
+  'quickshell: orange edge glow while it reads the screen'
+  'libpulse: narration playback for the guided tour'
+  'omarchy: theme switching in the guided tour'
+)
+makedepends=('git')
+provides=('beckon')
+conflicts=('beckon')
+source=("$pkgname::git+$url.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+
+  install -dm755 "$pkgdir/usr/lib/beckon"
+  install -Dm644 -t "$pkgdir/usr/lib/beckon" beckon/*.py beckon/ui.html beckon/glow.qml
+  install -Dm755 -t "$pkgdir/usr/lib/beckon" beckon/setup.sh
+
+  install -Dm644 LICENSE  "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/beckon" <<'LAUNCH'
+#!/bin/bash
+case "${1:-live}" in
+  ui)    shift; exec python3 /usr/lib/beckon/ui.py "$@" ;;
+  setup) shift; exec bash /usr/lib/beckon/setup.sh "$@" ;;
+  live)  shift; exec python3 /usr/lib/beckon/live.py "$@" ;;
+  *)     exec python3 /usr/lib/beckon/live.py "$@" ;;
+esac
+LAUNCH
+}

@@ -33,16 +33,34 @@ DATA = Path.home() / ".local" / "share" / "beckon"
 HISTORY = DATA / "history.jsonl"
 STATE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "beckon"
 STATE.mkdir(parents=True, exist_ok=True)
+# When installed as a package the code lives in /usr/lib and nothing has ever
+# created this; without it the very first logged turn raises FileNotFoundError.
+DATA.mkdir(parents=True, exist_ok=True)
 PIDFILE = STATE / "live.pid"
 MUTE = STATE / "mute"   # present while the tour narrates
 
-MODEL = os.environ.get("BECKON_LIVE_MODEL", "gemini-3.1-flash-live-preview")
+def setting(key, default):
+    """Read a value the panel saved. The panel passes model and voice through
+    the environment when IT starts a session, but the bound key launches this
+    file directly -- without this, every setting chosen in the panel was
+    silently ignored whenever the session was started with the keybind."""
+    try:
+        return json.loads((CONFIG / "settings.json").read_text()).get(key) or default
+    except (OSError, ValueError):
+        return default
+
+
+MODEL = os.environ.get("BECKON_LIVE_MODEL") or setting("model", "gemini-3.8-live")
 # By default the mic is gated while the model speaks, so its own voice coming
 # back through the speakers can't be mistaken for you interrupting it. Set
 # BECKON_BARGE_IN=1 (headphones) to keep the mic open and allow talking over it.
 BARGE_IN = os.environ.get("BECKON_BARGE_IN") == "1"
 SPEAK_TAIL = 0.4   # seconds to keep the mic closed after playback drains
-VOICE = os.environ.get("BECKON_LIVE_VOICE", "Puck")
+VOICE = os.environ.get("BECKON_LIVE_VOICE") or setting("voice", "Puck")
+# Extended-thinking Live models REFUSE a session that doesn't specify a thinking
+# level ("Thinking level must be specified for this model"), and reject MINIMAL.
+# Every other model must NOT be sent one. LOW keeps it responsive.
+THINKING = (os.environ.get("BECKON_THINKING") or setting("thinking_level", "LOW")).upper()
 
 IN_RATE, OUT_RATE, CHUNK = 16000, 24000, 1024
 
@@ -254,8 +272,16 @@ class Live:
                     start_of_speech_sensitivity=types.StartSensitivity.START_SENSITIVITY_LOW))
         except AttributeError:
             vad = None
+        think = None
+        if "thinking" in MODEL:
+            try:
+                think = types.ThinkingConfig(thinking_level=getattr(
+                    types.ThinkingLevel, THINKING, types.ThinkingLevel.LOW))
+            except AttributeError:
+                think = None
         config = types.LiveConnectConfig(
             realtime_input_config=vad,
+            thinking_config=think,
             response_modalities=["AUDIO"],
             system_instruction=SYSTEM + ("\n\n" + memory.render() if memory.render() else ""),
             tools=[{"function_declarations": declarations()}],

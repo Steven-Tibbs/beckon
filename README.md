@@ -74,27 +74,38 @@ yay -S --needed python-google-genai
 
 ## Install
 
+**As a package** (recommended) — pacman then owns the files, `pacman -R
+beckon-git` removes them cleanly, and rebuilding picks up the latest commit:
+
+```bash
+yay -S python-google-genai   # the one dependency not in the official repos
+git clone https://github.com/Steven-Tibbs/beckon.git
+cd beckon/packaging && makepkg -si
+```
+
+**Or from source**, if you'd rather not package it:
+
 ```bash
 git clone https://github.com/Steven-Tibbs/beckon.git
 cd beckon && ./install.sh
 ```
 
-`install.sh` checks the dependencies above, installs to
-`~/.local/share/beckon`, and puts a `beckon` launcher in `~/.local/bin`.
-
-Then open the panel and paste your API key:
+Either way, two more commands:
 
 ```bash
-beckon ui
+beckon ui       # paste your Gemini API key
+beckon setup    # bind a key — F8 by default, `beckon setup F7` for another
 ```
 
-Bind a key in `~/.config/hypr/bindings.lua` — F8 is free on a stock Omarchy install:
+`beckon setup` appends the binding to `~/.config/hypr/bindings.lua`, backs the
+file up first, and refuses to take a key that is already spoken for. To do it by
+hand instead:
 
 ```lua
-o.bind("F8", "Beckon", "python3 " .. os.getenv("HOME") .. "/.local/share/beckon/live.py")
+o.bind("F8", "Beckon", "beckon")
 ```
 
-Press it once to start listening, again to stop.
+Press the key once to start listening, again to stop.
 
 While Beckon is speaking it closes the mic, so its own voice coming out of your
 speakers can't register as you interrupting it. That means you can't talk over
@@ -115,12 +126,27 @@ one worked, and the pitfalls. A prompt that works:
 | | |
 |---|---|
 | `beckon` | start a live session (or press your bound key) |
-| `beckon ui` | control panel: API key, voice, custom tools, history |
+| `beckon ui` | control panel: API key, **model**, voice, custom tools, history |
 | *"give me a guided tour"* | the demo — it narrates itself |
 
 The tour's last step opens a local dev server. Point it at yours by putting
 `"dev_url": "http://localhost:3000"` (and optionally `"dev_line"` for what it
 says over it) in `~/.config/beckon/settings.json`.
+
+## Models
+
+Beckon runs on `gemini-3.8-live` by default. The panel lists every model the
+Live API can hold a session with; pick one and it applies to the next session,
+however you start it.
+
+| model | what it's for |
+|---|---|
+| `gemini-3.8-live` | default — fastest, best all-round |
+| `gemini-3.8-live-extended-thinking` | reasons harder on multi-step tasks; speaks a filler first and takes longer to finish |
+| `gemini-3.1-flash-live-preview` | previous default |
+
+Extended-thinking models need a thinking level; Beckon sends `LOW`, which you
+can change with `thinking_level` in `~/.config/beckon/settings.json`.
 
 ## Privacy
 

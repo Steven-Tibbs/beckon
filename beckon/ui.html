@@ -175,7 +175,7 @@ input:focus,select:focus{border-color:var(--accent)}
     <label>Voice</label>
     <select id="voice"></select>
     <label>Model</label>
-    <select id="model"><option>gemini-3.1-flash-live-preview</option></select>
+    <select id="model"></select>
     <div class="row"><button class="go" onclick="saveSettings()">Save</button></div>
     <p class="hint">Takes effect on the next session.</p>
   </section>
@@ -239,7 +239,11 @@ async function load(){
   const v=el('voice');v.innerHTML='';
   S.voices.forEach(x=>{const o=document.createElement('option');
     o.value=x.id;o.textContent=x.name;v.appendChild(o);});
-  v.value=S.settings.voice; el('model').value=S.settings.model;
+  v.value=S.settings.voice;
+  const m=el('model');m.innerHTML='';
+  (S.models||[]).forEach(x=>{const o=document.createElement('option');
+    o.value=x.id;o.textContent=x.name;m.appendChild(o);});
+  m.value=S.settings.model;
 
   el('sess').innerHTML=
     `<div class="kv"><dt>State</dt><dd class="${on?'good':'off'}">${on?'active':'idle'}</dd></div>

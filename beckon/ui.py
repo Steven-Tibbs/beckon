@@ -50,9 +50,10 @@ def write_custom(items):
 PORT = int(os.environ.get("BECKON_UI_PORT", "8777"))
 
 DEFAULTS = {
-    "model": "gemini-3.1-flash-live-preview",
+    "model": "gemini-3.8-live",
     "voice": "Puck",
     "text_model": "gemini-3.8-flash",
+    "thinking_level": "LOW",     # only used by extended-thinking models
 }
 
 
@@ -73,6 +74,21 @@ def save_settings(new):
     SETTINGS.write_text(json.dumps(s, indent=2))
     SETTINGS.chmod(0o600)
     return s
+
+
+# Live models, newest first. Only models the Live API can actually hold a
+# session with (supportedGenerationMethods includes bidiGenerateContent) belong
+# here -- the text model used for screen reads is a separate setting.
+LIVE_MODELS = [
+    ("gemini-3.8-live", "fastest, best all-round — recommended"),
+    ("gemini-3.8-live-extended-thinking", "reasons harder on multi-step tasks; slower"),
+    ("gemini-3.1-flash-live-preview", "previous default"),
+    ("gemini-2.5-flash-native-audio-latest", "older, native audio"),
+]
+
+
+def list_models():
+    return [{"id": i, "name": f"{i} — {d}"} for i, d in LIVE_MODELS]
 
 
 LIVE_VOICES = [
@@ -152,6 +168,7 @@ class Handler(BaseHTTPRequestHandler):
                 "key": key_status(),
                 "settings": s,
                 "voices": list_voices(),
+                "models": list_models(),
                 "active_voice": load_settings().get("voice", "Puck"),
                 "live_running": live_running(),
                 "tools": [
@@ -218,6 +235,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send({"ok": True, "memory": memory_view()})
 
         if self.path == "/api/clear-history":
+            DATA.mkdir(parents=True, exist_ok=True)
             HISTORY.write_text("")
             HISTORY.chmod(0o600)
             return self._send({"ok": True})

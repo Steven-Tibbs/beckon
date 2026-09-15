@@ -81,6 +81,25 @@ Independent project built for Omarchy users — not affiliated with Omarchy, Hyp
   `tools.py` need a session restart (press the bound key twice).
 - **Narration cache** is `~/.cache/beckon/narration/`, keyed by step name plus
   a hash of the text, so edited lines regenerate automatically.
+- **Model choice** lives in the panel and is saved to
+  `~/.config/beckon/settings.json`. `live.py` reads that file directly, because
+  the bound key launches it without the panel's environment -- before that it
+  silently ignored every model and voice chosen in the panel. Default is
+  `gemini-3.8-live`. Only models whose `supportedGenerationMethods` include
+  `bidiGenerateContent` can hold a Live session; list them with
+  `GET /v1beta/models`.
+- **Extended-thinking models refuse a session without a thinking level**
+  ("Thinking level must be specified for this model"), and reject `MINIMAL`.
+  `live.py` sends `ThinkingConfig(thinking_level=...)` only when the model name
+  contains "thinking"; every other model must NOT be sent one. `LOW` is the
+  default and keeps it responsive.
+- **3.8 Live dispatches tool calls and then ENDS THE TURN without speaking.**
+  The spoken answer arrives in the next turn, after the tool response goes back.
+  Code that stops reading at the first `turn_complete` sees a model that runs
+  tools and never talks. `live.py` is fine because `receive()` is re-entered in
+  a loop -- keep it that way. Measured on this machine: 3.8 Live answers in
+  2.4s against 3.45s for 3.1 Flash Live; extended-thinking speaks a filler at
+  1.3s but takes ~10s to finish.
 - **Page text (no scrolling).** `read_page_text()` and `look_at_screen(..., mode)`
   read a window's FULL text -- including what is scrolled off screen -- from the
   AT-SPI accessibility bus, so a long email never has to be screenshotted in
@@ -114,6 +133,30 @@ Independent project built for Omarchy users — not affiliated with Omarchy, Hyp
   (never committed): `dev_url` is the local dev server the tour opens at the end,
   `dev_line` the narration spoken over it. Both fall back to generic defaults, so
   nothing about one user's machine belongs in `tour.py`.
+
+## Packaging
+
+`packaging/PKGBUILD` builds the package, today with `makepkg -si` straight from
+a clone and later from the AUR unchanged. `makepkg -s` resolves dependencies
+through pacman, which knows nothing about the AUR, so `python-google-genai` --
+the only dependency outside the official repos -- has to be installed first.
+It is a **VCS package on purpose**:
+the repo carries exactly one commit that gets amended and force-pushed, so a
+release tarball's checksum would change under every push and a tag would pin a
+tree that no longer exists. `pkgver()` derives `r<count>.<short-sha>` from git.
+
+Packaged installs put the code in `/usr/lib/beckon` with a launcher at
+`/usr/bin/beckon`. That is why `live.py` creates `~/.local/share/beckon` itself:
+nothing else does when the code lives in `/usr`, and the first logged turn used
+to die with FileNotFoundError.
+
+`beckon setup` (`beckon/setup.sh`) adds the Hyprland keybinding. It is a command
+the user runs, never a pacman post-install step -- those run as root and must
+not rewrite someone's dotfiles. Omarchy has no API for adding a keybinding (its
+CLI only reads them), so the script appends the line itself, backs up
+`bindings.lua`, matches existing binds on the COMMAND rather than the label (so
+an upgrade from the manual install isn't double-bound), and refuses a key that
+is already taken.
 
 ## Pitfalls already hit — don't re-learn these
 
