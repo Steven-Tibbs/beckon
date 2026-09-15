@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+
+# never commit credentials or local state
+api_key
+settings.json
+custom_tools.json
+history.jsonl
+memory.json
+*.pid
+.env
+
+# machine-specific notes and generated artefacts
+HANDOFF.md
+narration/
+*.wav
+*.log
+
+# editor / tooling
+.claude/
+.vscode/
+.idea/
+*.swp
+.DS_Store

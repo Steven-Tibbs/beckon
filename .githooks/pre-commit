@@ -1,0 +1,30 @@
+#!/bin/bash
+# Refuse to commit anything private. Beckon's history, memory, settings and API
+# key live outside this repo on purpose -- this hook is the second lock, for the
+# day someone copies one in "just to look at it".
+#
+# Enable it once per clone:  git config core.hooksPath .githooks
+set -uo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[[ -z $staged ]] && exit 0
+
+fail() { echo "pre-commit: refusing to commit — $1" >&2; exit 1; }
+
+# 1. private files, at any path
+while read -r f; do
+  case "${f##*/}" in
+    api_key|history.jsonl|memory.json|settings.json|custom_tools.json|HANDOFF.md)
+      fail "$f is local user data and must never be committed" ;;
+  esac
+done <<< "$staged"
+
+# 2. key material or a real home path inside the staged content
+if git diff --cached -U0 | grep -qE '^\+.*AIza[0-9A-Za-z_-]{25,}'; then
+  fail "a Google API key appears in the staged changes"
+fi
+if git diff --cached -U0 | grep -qE '^\+.*(/home/[a-z_][a-z0-9_-]*/|/Users/[a-z_][a-z0-9_-]*/)'; then
+  fail "an absolute home directory path appears in the staged changes"
+fi
+
+exit 0
