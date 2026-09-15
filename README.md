@@ -105,8 +105,24 @@ hand instead:
 o.bind("F8", "Beckon", "beckon")
 ```
 
-Press the key once to start listening, again to stop. **Beckon** also appears
-in your app grid — that opens the control panel.
+Press the key once to start listening, again to stop.
+
+### The app icon
+
+Both install methods add **Beckon** to your app grid — clicking it opens the
+control panel. The package puts the entry in `/usr/share/applications` and the
+icon in `/usr/share/icons/hicolor/scalable/apps`; `install.sh` puts both under
+`~/.local/share`.
+
+If it doesn't show up, your launcher is holding a stale cache:
+
+```bash
+update-desktop-database ~/.local/share/applications
+gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor
+```
+
+Some launchers only rescan on login. If you installed Beckon before the icon
+existed, reinstall (`makepkg -si` or `./install.sh`) and it appears.
 
 While Beckon is speaking it closes the mic, so its own voice coming out of your
 speakers can't register as you interrupting it. That means you can't talk over
@@ -128,6 +144,7 @@ one worked, and the pitfalls. A prompt that works:
 |---|---|
 | `beckon` | start a live session (or press your bound key) |
 | `beckon ui` | control panel: API key, **model**, voice, custom tools, history |
+| `beckon setup` | bind a key — `beckon setup F7` to choose another |
 | *"give me a guided tour"* | the demo — it narrates itself |
 
 The tour's last step opens a local dev server. Point it at yours by putting
@@ -155,7 +172,8 @@ Audio goes to Google's Live API; that is what makes the low latency possible.
 Nothing is sent anywhere else. Your key lives in `~/.config/beckon/api_key`
 with `0600` permissions and is never shown in the UI, not even partially.
 Conversation history is local (`~/.local/share/beckon/history.jsonl`) and has
-a **clear** button in the panel.
+a **clear** button in the panel. It, your memory, your settings and your custom
+tools are all written `0600` — readable only by you, even on a shared machine.
 
 ## Memory
 

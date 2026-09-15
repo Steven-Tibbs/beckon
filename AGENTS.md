@@ -94,6 +94,14 @@ Independent project built for Omarchy users — not affiliated with Omarchy, Hyp
   `tools.py` need a session restart (press the bound key twice).
 - **Narration cache** is `~/.cache/beckon/narration/`, keyed by step name plus
   a hash of the text, so edited lines regenerate automatically.
+- **App-grid entry.** `beckon/beckon.desktop` plus `beckon/beckon.svg` ship in
+  both install paths: the package installs them under `/usr/share`, `install.sh`
+  under `~/.local/share` and rewrites `Exec=` to the launcher's absolute path,
+  because a desktop entry is not guaranteed to see `~/.local/bin` on PATH.
+  Launching from a grid means it can be clicked twice, so `ui.py` checks whether
+  port 8777 is already served and just shows the running panel instead of dying
+  on "address already in use"; its browser launch falls back chromium ->
+  xdg-open rather than assuming Chrome.
 - **Model choice** lives in the panel and is saved to
   `~/.config/beckon/settings.json`. `live.py` reads that file directly, because
   the bound key launches it without the panel's environment -- before that it
@@ -170,6 +178,19 @@ CLI only reads them), so the script appends the line itself, backs up
 `bindings.lua`, matches existing binds on the COMMAND rather than the label (so
 an upgrade from the manual install isn't double-bound), and refuses a key that
 is already taken.
+
+## Environment overrides
+
+Every one of these beats the panel's saved setting, for a one-off run:
+
+| | |
+|---|---|
+| `BECKON_LIVE_MODEL` | model for this session |
+| `BECKON_LIVE_VOICE` | prebuilt voice name |
+| `BECKON_THINKING` | thinking level for extended-thinking models (`LOW`/`MEDIUM`/`HIGH`) |
+| `BECKON_BARGE_IN=1` | keep the mic open while it speaks (headphones) |
+| `BECKON_UI_PORT` | port for the control panel, default 8777 |
+| `GEMINI_API_KEY` / `GOOGLE_API_KEY` | key, instead of the file |
 
 ## Pitfalls already hit — don't re-learn these
 
