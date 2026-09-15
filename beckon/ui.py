@@ -8,6 +8,7 @@ it has to be edited by hand.
 
 import json
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -264,14 +265,40 @@ class Handler(BaseHTTPRequestHandler):
         return self._send({"error": "not found"}, 404)
 
 
+def open_panel(url):
+    """Show the panel in an app window. Chrome's --app gives a chromeless
+    window, but not everyone has Chrome -- fall back to whatever handles http,
+    rather than silently opening nothing."""
+    import shutil
+    for cmd in (["uwsm-app", "--", "google-chrome-stable", f"--app={url}"],
+                ["google-chrome-stable", f"--app={url}"],
+                ["chromium", f"--app={url}"],
+                ["xdg-open", url]):
+        if shutil.which(cmd[0]):
+            subprocess.Popen(cmd, start_new_session=True,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return
+    print(f"open {url} in a browser")
+
+
 def main():
-    srv = HTTPServer(("127.0.0.1", PORT), Handler)
     url = f"http://127.0.0.1:{PORT}/"
+    # Launched from the app grid, this can be clicked twice. A second process
+    # would die on "address already in use"; just show the panel that is up.
+    probe = socket.socket()
+    probe.settimeout(0.4)
+    already = probe.connect_ex(("127.0.0.1", PORT)) == 0
+    probe.close()
+    if already:
+        print(f"Beckon panel already running -> {url}")
+        if "--no-open" not in sys.argv:
+            open_panel(url)
+        return
+
+    srv = HTTPServer(("127.0.0.1", PORT), Handler)
     print(f"Beckon control panel -> {url}   (Ctrl+C to stop)")
     if "--no-open" not in sys.argv:
-        threading.Timer(0.6, lambda: subprocess.run(
-            ["uwsm-app", "--", "google-chrome-stable", f"--app={url}"],
-            check=False)).start()
+        threading.Timer(0.6, lambda: open_panel(url)).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

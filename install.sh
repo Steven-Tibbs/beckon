@@ -33,6 +33,15 @@ mkdir -p "$DEST" "$BIN" "$HOME/.config/beckon"
 cp "$SRC"/*.py "$SRC"/*.html "$SRC"/*.qml "$DEST/"
 install -m 755 "$SRC/setup.sh" "$DEST/setup.sh"
 
+# App-grid entry. Exec is rewritten to the absolute launcher path: a desktop
+# entry is not guaranteed to see ~/.local/bin on PATH.
+install -Dm644 "$SRC/beckon.desktop" "$HOME/.local/share/applications/beckon.desktop"
+install -Dm644 "$SRC/beckon.svg" \
+  "$HOME/.local/share/icons/hicolor/scalable/apps/beckon.svg"
+sed -i "s|^Exec=beckon ui|Exec=$BIN/beckon ui|" "$HOME/.local/share/applications/beckon.desktop"
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+
 cat > "$BIN/beckon" <<'LAUNCH'
 #!/bin/bash
 case "${1:-live}" in

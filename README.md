@@ -105,7 +105,8 @@ hand instead:
 o.bind("F8", "Beckon", "beckon")
 ```
 
-Press the key once to start listening, again to stop.
+Press the key once to start listening, again to stop. **Beckon** also appears
+in your app grid — that opens the control panel.
 
 While Beckon is speaking it closes the mic, so its own voice coming out of your
 speakers can't register as you interrupting it. That means you can't talk over

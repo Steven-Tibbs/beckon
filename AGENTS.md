@@ -14,30 +14,43 @@ Independent project built for Omarchy users — not affiliated with Omarchy, Hyp
 
 ## Install on Omarchy (verified steps)
 
-1. Dependencies. Everything but the SDK is in the official repos.
+1. Dependencies. Everything but the Gemini SDK is in the official repos.
    ```
-   sudo pacman -S --needed python-websockets python-sounddevice wtype grim wl-clipboard ydotool libnotify
+   sudo pacman -S --needed python-websockets python-sounddevice wtype grim wl-clipboard ydotool libnotify python-gobject at-spi2-core
    yay -S --needed python-google-genai
    ```
    Check: `python3 -c "import websockets, sounddevice, google.genai"` prints nothing.
-2. `git clone https://github.com/Steven-Tibbs/beckon.git && cd beckon && ./install.sh`
-   Check: `command -v beckon` resolves to `~/.local/bin/beckon`.
+2. Install. As a package, so pacman owns the files and removal is clean:
+   ```
+   git clone https://github.com/Steven-Tibbs/beckon.git
+   cd beckon/packaging && makepkg -si
+   ```
+   `makepkg -s` resolves dependencies through pacman, which knows nothing about
+   the AUR, so `python-google-genai` must already be installed (step 1).
+   Without makepkg, `cd beckon && ./install.sh` installs into `~/.local`.
+   Check: `command -v beckon` resolves, and Beckon appears in the app grid.
 3. API key. Never handle it yourself — tell the user to run `beckon ui` and
    paste it, or to write it themselves:
    `install -m 600 /dev/null ~/.config/beckon/api_key` then edit the file.
    Check: `wc -c < ~/.config/beckon/api_key` is roughly 39; keys start `AIza`.
-4. Keybinding. Append to `~/.config/hypr/bindings.lua`:
-   ```lua
-   o.bind("F8", "Beckon", "python3 " .. os.getenv("HOME") .. "/.local/share/beckon/live.py")
+4. Keybinding: `beckon setup` (or `beckon setup F7` for another key). It appends
+   to `~/.config/hypr/bindings.lua`, backs it up, and refuses a key that is
+   already bound. Check `hyprctl configerrors` is empty afterwards.
+5. Reading full pages (optional but worth it). Both are required; neither works
+   alone, and Chromium reads the state only at startup:
    ```
-   Then `hyprctl reload` and confirm `hyprctl configerrors` is empty.
-   Check F8 is free first: `omarchy menu keybindings --print | grep '^F8'`.
-5. Mouse clicks (optional). `ydotool` needs a daemon with `/dev/uinput`
+   gsettings set org.gnome.desktop.interface toolkit-accessibility true
+   gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+   echo '--force-renderer-accessibility' >> ~/.config/chrome-flags.conf
+   ```
+   Check: restart Chrome, open a page, then `python3 /usr/lib/beckon/tools.py
+   --page-text chrome` prints the page's text.
+6. Mouse clicks (optional). `ydotool` needs a daemon with `/dev/uinput`
    access; see the README's *Mouse clicks* section for the system unit.
    Check: `ls -l /tmp/.ydotool_socket` is owned by the user, mode `srw-------`.
-6. Smoke test: `beckon` starts a session and shows a "Listening" notification.
-   Ask it *"how many windows do I have open?"* — it should call `list_windows`
-   and answer aloud. `beckon ui` shows the tool count and an empty history.
+7. Smoke test: press the bound key and ask *"how many windows do I have open?"*
+   — it should call `list_windows` and answer aloud. With step 5 done, open an
+   article and ask it to read the bottom of the page without scrolling.
 
 ## How the pieces fit
 

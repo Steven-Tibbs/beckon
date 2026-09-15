@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Beckon
+GenericName=Voice control
+Comment=Talk to your desktop — panel for the API key, model, voice, tools and history
+Exec=beckon ui
+Icon=beckon
+Terminal=false
+Categories=Utility;Accessibility;
+Keywords=voice;speech;assistant;agent;gemini;dictation;
+StartupNotify=true

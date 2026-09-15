@@ -48,6 +48,11 @@ package() {
   install -Dm644 -t "$pkgdir/usr/lib/beckon" beckon/*.py beckon/ui.html beckon/glow.qml
   install -Dm755 -t "$pkgdir/usr/lib/beckon" beckon/setup.sh
 
+  # so Beckon shows up in the app grid instead of being terminal-only
+  install -Dm644 beckon/beckon.desktop "$pkgdir/usr/share/applications/beckon.desktop"
+  install -Dm644 beckon/beckon.svg \
+    "$pkgdir/usr/share/icons/hicolor/scalable/apps/beckon.svg"
+
   install -Dm644 LICENSE  "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- userSpaceOnUse on purpose: the default objectBoundingBox units paint
+         NOTHING on a zero-height shape, which silently erased the stem and base. -->
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="16" x2="64" y2="108">
+      <stop offset="0" stop-color="#ffb347"/>
+      <stop offset="1" stop-color="#ff8a1f"/>
+    </linearGradient>
+  </defs>
+  <!-- mic body -->
+  <rect x="52" y="20" width="24" height="46" rx="12" fill="url(#g)"/>
+  <!-- cradle -->
+  <path d="M38 58a26 26 0 0 0 52 0" fill="none" stroke="url(#g)" stroke-width="7"
+        stroke-linecap="round"/>
+  <!-- stem and base -->
+  <path d="M64 84v14" fill="none" stroke="url(#g)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M48 104h32" fill="none" stroke="url(#g)" stroke-width="7" stroke-linecap="round"/>
+  <!-- it's listening: waves either side -->
+  <path d="M26 36a30 30 0 0 0 0 28" fill="none" stroke="url(#g)" stroke-width="6"
+        stroke-linecap="round" opacity=".55"/>
+  <path d="M102 36a30 30 0 0 1 0 28" fill="none" stroke="url(#g)" stroke-width="6"
+        stroke-linecap="round" opacity=".55"/>
+</svg>
