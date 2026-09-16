@@ -65,7 +65,7 @@ adjustment:
 | Narration playback | `pipewire-pulse` | `paplay`; already on Omarchy |
 | Music control in the tour | `systemd` | `busctl` for MPRIS; already there |
 | Theme switching in the tour | `omarchy` CLI | Omarchy only |
-| Model access | Gemini API key | free at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| Model access | Gemini API key | automatic setup needs Google Cloud CLI; manual fallback is [AI Studio](https://aistudio.google.com/apikey) |
 
 ```bash
 sudo pacman -S --needed python-websockets python-sounddevice wtype grim wl-clipboard ydotool libnotify
@@ -83,6 +83,10 @@ git clone https://github.com/Steven-Tibbs/beckon.git
 cd beckon/packaging && makepkg -si
 ```
 
+`makepkg -si` builds the package and invokes `pacman -U` itself. If you prefer
+to inspect the generated package before installing it, run `makepkg -s` and
+then `sudo pacman -U ./beckon-git-*.pkg.tar.zst`.
+
 **Or from source**, if you'd rather not package it:
 
 ```bash
@@ -90,12 +94,38 @@ git clone https://github.com/Steven-Tibbs/beckon.git
 cd beckon && ./install.sh
 ```
 
-Either way, two more commands:
+Either way, configure the API key and bind a key:
 
 ```bash
-beckon ui       # paste your Gemini API key
+beckon setup-api-key --project PROJECT_ID
+beckon ui       # inspect/test the key; choose model, voice, and tools
 beckon setup    # bind a key — F8 by default, `beckon setup F7` for another
 ```
+
+If you already have a standard Gemini API key, skip `setup-api-key`, run
+`beckon ui`, paste it, and click **Test connection**.
+
+### Gemini API key
+
+`beckon setup-api-key` is the recommended path. It signs in to Google Cloud if
+needed, enables the Gemini Developer API, creates a **standard** API key
+restricted to `generativelanguage.googleapis.com`, saves it at
+`~/.config/beckon/api_key` with `0600` permissions, and verifies the
+connection. Install the Google Cloud CLI first if `gcloud` is unavailable.
+On Arch/Omarchy, run `yay -S google-cloud-cli` to install it.
+
+The project must already exist; pass it explicitly as above, or set it with
+`gcloud config set project PROJECT_ID`. To replace a non-working or old key:
+
+```bash
+beckon setup-api-key --project PROJECT_ID --rotate
+```
+
+Do not restrict the key only to Vertex AI: it needs access to the Gemini
+Developer API. Keys bound to a service account can also be subject to
+organization policies, which complicates changing their restrictions. The
+**Test connection** button in `beckon ui` checks access without displaying
+the key.
 
 `beckon setup` appends the binding to `~/.config/hypr/bindings.lua`, backs the
 file up first, and refuses to take a key that is already spoken for. To do it by

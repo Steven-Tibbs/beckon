@@ -23,6 +23,8 @@ depends=(
   'libnotify'
 )
 optdepends=(
+  'google-cloud-cli: automatic Gemini API key setup'
+  'curl: connection test during automatic API key setup'
   'ydotool: mouse clicks and pressing your real keyboard shortcuts'
   'python-gobject: read a page or email in full without scrolling'
   'at-spi2-core: the accessibility bus that publishes that text'
@@ -47,6 +49,7 @@ package() {
   install -dm755 "$pkgdir/usr/lib/beckon"
   install -Dm644 -t "$pkgdir/usr/lib/beckon" beckon/*.py beckon/ui.html beckon/glow.qml
   install -Dm755 -t "$pkgdir/usr/lib/beckon" beckon/setup.sh
+  install -Dm755 scripts/setup_gemini_api_key.sh "$pkgdir/usr/lib/beckon/setup_gemini_api_key.sh"
 
   # so Beckon shows up in the app grid instead of being terminal-only
   install -Dm644 beckon/beckon.desktop "$pkgdir/usr/share/applications/beckon.desktop"
@@ -61,6 +64,7 @@ package() {
 case "${1:-live}" in
   ui)    shift; exec python3 /usr/lib/beckon/ui.py "$@" ;;
   setup) shift; exec bash /usr/lib/beckon/setup.sh "$@" ;;
+  setup-api-key) shift; exec bash /usr/lib/beckon/setup_gemini_api_key.sh "$@" ;;
   live)  shift; exec python3 /usr/lib/beckon/live.py "$@" ;;
   *)     exec python3 /usr/lib/beckon/live.py "$@" ;;
 esac

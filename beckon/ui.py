@@ -12,6 +12,8 @@ import socket
 import subprocess
 import sys
 import threading
+import urllib.error
+import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -125,12 +127,39 @@ def key_status():
         return {"set": False, "bytes": 0, "hint": ""}
     raw = KEYFILE.read_text().strip()
     return {
-        "set": len(raw) > 20,
+        "set": bool(raw),
         "bytes": len(raw),
         # the key is never echoed back, not even partially
         "hint": "",
-        "looks_like_gemini": raw.startswith("AIza"),
     }
+
+
+def test_key():
+    """Make a small authenticated Gemini API request without exposing the key."""
+    if not KEYFILE.exists():
+        return {"ok": False, "error": "No API key is configured."}
+    key = KEYFILE.read_text().strip()
+    if not key:
+        return {"ok": False, "error": "No API key is configured."}
+    url = "https://generativelanguage.googleapis.com/v1beta/models"
+    request = urllib.request.Request(url, headers={"x-goog-api-key": key})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            response.read(1)
+        return {"ok": True, "message": "Gemini API connection confirmed."}
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")
+        if "API_KEY_SERVICE_BLOCKED" in detail:
+            message = "This key does not allow the Gemini Developer API. Check its API restrictions."
+        elif "SERVICE_DISABLED" in detail or "has not been used" in detail:
+            message = "Gemini Developer API is disabled for this project."
+        elif "API_KEY_INVALID" in detail:
+            message = "The API key is invalid, revoked, or incomplete."
+        else:
+            message = f"Gemini API rejected the request (HTTP {exc.code})."
+        return {"ok": False, "error": message}
+    except OSError as exc:
+        return {"ok": False, "error": f"Could not reach Gemini API: {exc}"}
 
 
 def recent_history(n=40):
@@ -193,12 +222,15 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/api/key":
             key = (body.get("key") or "").strip()
-            if len(key) < 20:
-                return self._send({"error": "that doesn't look like a key (too short)"}, 400)
+            if not key:
+                return self._send({"error": "enter an API key"}, 400)
             CONFIG.mkdir(parents=True, exist_ok=True)
             KEYFILE.write_text(key)
             KEYFILE.chmod(0o600)
             return self._send({"ok": True, "key": key_status()})
+
+        if self.path == "/api/key-test":
+            return self._send(test_key())
 
         if self.path == "/api/settings":
             return self._send({"ok": True, "settings": save_settings(body)})
