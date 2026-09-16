@@ -32,6 +32,7 @@ python3 -c "import gi" 2>/dev/null \
 mkdir -p "$DEST" "$BIN" "$HOME/.config/beckon"
 cp "$SRC"/*.py "$SRC"/*.html "$SRC"/*.qml "$DEST/"
 install -m 755 "$SRC/setup.sh" "$DEST/setup.sh"
+install -m 755 "$(dirname "$SRC")/scripts/setup_gemini_api_key.sh" "$DEST/setup_gemini_api_key.sh"
 
 # App-grid entry. Exec is rewritten to the absolute launcher path: a desktop
 # entry is not guaranteed to see ~/.local/bin on PATH.
@@ -47,6 +48,7 @@ cat > "$BIN/beckon" <<'LAUNCH'
 case "${1:-live}" in
   ui)    shift; exec python3 "$HOME/.local/share/beckon/ui.py" "$@" ;;
   setup) shift; exec bash "$HOME/.local/share/beckon/setup.sh" "$@" ;;
+  setup-api-key) shift; exec bash "$HOME/.local/share/beckon/setup_gemini_api_key.sh" "$@" ;;
   live)  shift; exec python3 "$HOME/.local/share/beckon/live.py" "$@" ;;
   *)     exec python3 "$HOME/.local/share/beckon/live.py" "$@" ;;
 esac
@@ -57,9 +59,10 @@ echo
 echo "Installed to $DEST"
 echo
 echo "Next:"
-echo "  1. beckon ui        — open the panel and paste your Gemini API key"
-echo "  2. beckon setup     — bind a key (F8 by default; 'beckon setup F7' for another)"
-echo "  3. press that key   — or run 'beckon' to start a session in the terminal"
+echo "  1. beckon setup-api-key --project PROJECT_ID  — create and test a Gemini API key"
+echo "  2. beckon ui        — inspect connection, model, voice, and tools"
+echo "  3. beckon setup     — bind a key (F8 by default; 'beckon setup F7' for another)"
+echo "  4. press that key   — or run 'beckon' to start a session in the terminal"
 echo
 echo "To let it read a whole page or email without scrolling (optional):"
 echo "  gsettings set org.gnome.desktop.interface toolkit-accessibility true"

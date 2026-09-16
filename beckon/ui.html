@@ -185,7 +185,8 @@ input:focus,select:focus{border-color:var(--accent)}
     <dl id="keyState"></dl>
     <label>Replace key</label>
     <input id="key" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false">
-    <div class="row"><button class="go" onclick="saveKey()">Save key</button></div>
+    <div class="row"><button class="go" onclick="saveKey()">Save key</button>
+      <button onclick="testKey()">Test connection</button></div>
     <p class="hint">Stored at <code>~/.config/beckon/api_key</code>, permissions 0600.
       Never displayed once saved.</p>
   </section>
@@ -232,8 +233,7 @@ async function load(){
   b.className=on?'stop':'go';
 
   el('keyState').innerHTML=S.key.set
-    ? `<div class="kv"><dt>Status</dt><dd class="good">configured</dd></div>
-       ${S.key.looks_like_gemini?'':'<div class="kv"><dt>Format</dt><dd class="warn">unexpected — should start AIza</dd></div>'}`
+    ? `<div class="kv"><dt>Status</dt><dd class="good">configured</dd></div>`
     : `<div class="kv"><dt>Status</dt><dd class="warn">not set</dd></div>`;
 
   const v=el('voice');v.innerHTML='';
@@ -310,6 +310,10 @@ async function saveKey(){
   const r=await api('/api/key',{key:k});
   if(r.error) return toast(r.error,'err');
   el('key').value=''; toast('key saved','ok'); load();
+}
+async function testKey(){
+  const r=await api('/api/key-test',{});
+  toast(r.ok?(r.message||'connection confirmed'):(r.error||'connection failed'),r.ok?'ok':'err');
 }
 async function saveSettings(){
   await api('/api/settings',{model:el('model').value,voice:el('voice').value});
