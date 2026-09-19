@@ -210,7 +210,12 @@ input:focus,select:focus{border-color:var(--accent)}
 <script>
 let S={};
 const el=i=>document.getElementById(i);
-const esc=s=>String(s??'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+// escapes quotes as well as angle brackets: these values reach HTML attributes,
+// and anything the model can write (a memory key, a tool name) lands here
+const esc=s=>String(s??'').replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+// delegated so nothing model-controlled is ever parsed as code
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');
+  if(!b) return; const f={forget,removeTool}[b.dataset.act]; if(f) f(b.dataset.arg);});
 function toast(m,k){const t=el('toast');t.textContent=m;t.className='toast show '+(k||'');
   setTimeout(()=>t.className='toast '+(k||''),2500);}
 async function api(p,b){const o=b?{method:'POST',headers:{'Content-Type':'application/json'},
@@ -226,7 +231,7 @@ async function load(){
 
   el('liveBig').textContent=on?'Listening':'Not listening';
   el('liveMeta').textContent=on
-    ? `${S.settings.model} · voice ${S.settings.voice}`
+    ? `${esc(S.settings.model)} · voice ${esc(S.settings.voice)}`
     : 'Press F8 or start a session to begin';
   const b=el('liveBtn');
   b.textContent=on?'End session':'Start session';
@@ -252,32 +257,32 @@ async function load(){
 
   el('custom').innerHTML=(S.custom_tools||[]).length
     ? S.custom_tools.map(t=>`<div class="ct"><b>${esc(t.name)}</b><code>${esc(t.command)}</code>
-        <button class="mini" onclick="removeTool('${esc(t.name)}')">remove</button></div>`).join('')
+        <button class="mini" data-act="removeTool" data-arg="${esc(t.name)}">remove</button></div>`).join('')
     : '<div class="none">None yet.</div>';
   const M=S.memory||{preferences:{},notes:[]};
   const prefs=Object.entries(M.preferences||{}), notes=M.notes||[];
   el('mem').innerHTML=(prefs.length||notes.length)
     ? prefs.map(([k,v])=>`<div class="ct"><b>${esc(k)}</b><code>${esc(v)}</code>
-        <button class="mini" onclick="forget('${esc(k)}')">forget</button></div>`).join('')
+        <button class="mini" data-act="forget" data-arg="${esc(k)}">forget</button></div>`).join('')
       + notes.map(n=>`<div class="ct"><b style="color:var(--dim)">note</b><code>${esc(n.text)}</code>
-        <button class="mini" onclick="forget('${esc(n.text.slice(0,40))}')">forget</button></div>`).join('')
+        <button class="mini" data-act="forget" data-arg="${esc(n.text.slice(0,40))}">forget</button></div>`).join('')
     : '<div class="none">Nothing remembered yet. Say “remember that I use Gmail.”</div>';
   el('memNote').textContent=`${prefs.length}/${M.caps?.preferences??40} preferences · ${notes.length}/${M.caps?.notes??30} notes · ${M.bytes??0} bytes on disk. Hard-capped; oldest entries drop off.`;
   el('tn').textContent='· '+S.tools.length;
   el('tools').innerHTML=S.tools.map(t=>
-    `<div class="t"><b>${t.name}</b><span>${esc(t.doc.split('\n')[0])}</span></div>`).join('');
+    `<div class="t"><b>${esc(t.name)}</b><span>${esc(t.doc.split('\n')[0])}</span></div>`).join('');
 
   el('desk').innerHTML=
-    S.monitors.map(m=>`<div class="kv"><dt>${m.name}${m.focused?' ·':''}</dt>
-      <dd class="off">${m.resolution} @${m.scale}×</dd></div>`).join('')
+    S.monitors.map(m=>`<div class="kv"><dt>${esc(m.name)}${m.focused?' ·':''}</dt>
+      <dd class="off">${esc(m.resolution)} @${esc(m.scale)}×</dd></div>`).join('')
     +S.windows.slice(0,8).map(w=>`<div class="kv"><dt>${esc(w.app)}</dt>
-      <dd class="off">ws ${w.workspace}</dd></div>`).join('');
+      <dd class="off">ws ${esc(w.workspace)}</dd></div>`).join('');
 
   el('log').innerHTML=S.history.length?S.history.map(h=>`
     <div class="turn">
       <div class="q">${esc(h.heard)}</div>
       ${h.reply?`<div class="a">${esc(h.reply)}</div>`:''}
-      <div class="foot">${(h.actions||[]).map(a=>`<span class="chip">${a.tool}</span>`).join('')}
+      <div class="foot">${(h.actions||[]).map(a=>`<span class="chip">${esc(a.tool)}</span>`).join('')}
         <time>${(h.ts||'').replace('T',' ').slice(5)}</time></div>
     </div>`).join(''):'<div class="none">Nothing yet. Press F8 and say hello.</div>';
 }

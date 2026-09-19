@@ -198,11 +198,29 @@ can change with `thinking_level` in `~/.config/beckon/settings.json`.
 ## Privacy
 
 Audio goes to Google's Live API; that is what makes the low latency possible.
-Nothing is sent anywhere else. Your key lives in `~/.config/beckon/api_key`
+When you ask it to look at or read something, that goes to Google too: a
+screenshot of the focused monitor for `look_at_screen`, and the window's text
+for `read_page_text` — which is the whole window, including parts scrolled off
+screen. Nothing is sent anywhere else, and nothing is sent unless you ask for
+something that needs it. Your key lives in `~/.config/beckon/api_key`
 with `0600` permissions and is never shown in the UI, not even partially.
 Conversation history is local (`~/.local/share/beckon/history.jsonl`) and has
 a **clear** button in the panel. It, your memory, your settings and your custom
 tools are all written `0600` — readable only by you, even on a shared machine.
+
+### What it reads is not who it takes orders from
+
+Anything Beckon reads off your screen — a page, an email, the clipboard — is
+attacker-controlled text, and a page can hide instructions where you cannot see
+them (screen-reader-only CSS, an `aria-label`, anything below the fold). All of
+it reaches the model wrapped in an untrusted-content marker, and the prompt is
+explicit that such text is reported, never acted on. Content is also never
+written to memory: only what you say out loud is, and you get a notification
+when it happens.
+
+That reduces the risk. It does not eliminate it — no prompt rule does. Treat
+"read me this page" on a site you don't trust the way you'd treat running a
+script from it.
 
 ## Memory
 

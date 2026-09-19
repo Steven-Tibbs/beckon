@@ -195,6 +195,31 @@ Every one of these beats the panel's saved setting, for a one-off run:
 | `BECKON_UI_PORT` | port for the control panel, default 8777 |
 | `GEMINI_API_KEY` / `GOOGLE_API_KEY` | key, instead of the file |
 
+## Security posture
+
+- **Screen content is untrusted input.** `read_page_text`, `look_at_screen` and
+  `read_clipboard` all return their content wrapped by `tools._untrusted()`, and
+  the system prompt has a rule that such text is reported, never obeyed. This is
+  mitigation, not a fix -- prompt injection has no complete fix. The reason it
+  matters here: the model holds `type_text`, `press_keybind` and `launch_app`,
+  and typing into a terminal is arbitrary command execution.
+- **The accessibility tree sees what the user cannot.** Screen-reader-only CSS,
+  `aria-label` on an empty element, anything below the fold -- all of it reaches
+  the model verbatim. Verified by test. Never assume the user has seen text just
+  because it came from their screen.
+- **Memory is the persistence vector.** It is rendered into the system prompt at
+  every session start, so one bad entry works forever. Only user speech may be
+  written, never page content, and every write raises a notification.
+- **Panel POSTs are same-origin only** (`ui.Handler._same_origin`): JSON content
+  type (so a no-preflight `text/plain` POST is refused), a `Host` that is really
+  us (DNS rebinding), and an `Origin` that is ours or absent. Without it, any
+  page the user had open could reach `/api/custom-tools`, which registers a
+  shell command the assistant can run.
+- **Nothing model-controlled goes into HTML unescaped.** `esc()` in `ui.html`
+  covers quotes as well as angle brackets, and the buttons carry `data-act` /
+  `data-arg` rather than interpolating values into an inline `onclick` -- a
+  memory key is chosen by the model, and the model can be steered by a page.
+
 ## Pitfalls already hit — don't re-learn these
 
 - Hyprland's synthetic `BTN_LEFT` via `send_key_state` returns `ok` but no

@@ -213,7 +213,35 @@ class Handler(BaseHTTPRequestHandler):
             })
         return self._send({"error": "not found"}, 404)
 
+    def _same_origin(self):
+        """Only the panel's own page may POST here.
+
+        Every endpoint below changes something, and /api/custom-tools registers a
+        shell command the assistant can later run -- so a POST from any page the
+        user happens to have open would be a remote hole. Three checks:
+
+        - JSON content type. A cross-site fetch sending application/json must
+          pass a CORS preflight first, which nothing here answers. text/plain
+          would sail through without one, so that is exactly what we refuse.
+        - Host is really us, which is what stops DNS rebinding: a hostile name
+          resolving to 127.0.0.1 arrives with its own Host header, not ours.
+        - Origin is ours or absent. Same-origin fetches from the panel send our
+          origin; cross-site ones send theirs; curl and friends send none.
+        """
+        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        if ctype != "application/json":
+            return False
+        allowed = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
+        if (self.headers.get("Host") or "").strip().lower() not in allowed:
+            return False
+        origin = (self.headers.get("Origin") or "").strip()
+        if origin and origin.split("//")[-1].lower() not in allowed:
+            return False
+        return True
+
     def do_POST(self):
+        if not self._same_origin():
+            return self._send({"error": "cross-origin request refused"}, 403)
         length = int(self.headers.get("Content-Length", 0))
         try:
             body = json.loads(self.rfile.read(length) or b"{}")
