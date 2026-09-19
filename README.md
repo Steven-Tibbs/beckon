@@ -94,38 +94,37 @@ git clone https://github.com/Steven-Tibbs/beckon.git
 cd beckon && ./install.sh
 ```
 
-Either way, configure the API key and bind a key:
+Either way, two more commands:
 
 ```bash
-beckon setup-api-key --project PROJECT_ID
-beckon ui       # inspect/test the key; choose model, voice, and tools
+beckon ui       # paste your Gemini API key, then hit Test connection
 beckon setup    # bind a key — F8 by default, `beckon setup F7` for another
 ```
 
-If you already have a standard Gemini API key, skip `setup-api-key`, run
-`beckon ui`, paste it, and click **Test connection**.
+Get a key free at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+— that is the fastest way in, and nothing else is required.
 
-### Gemini API key
+### Already using Google Cloud?
 
-`beckon setup-api-key` is the recommended path. It signs in to Google Cloud if
-needed, enables the Gemini Developer API, creates a **standard** API key
-restricted to `generativelanguage.googleapis.com`, saves it at
-`~/.config/beckon/api_key` with `0600` permissions, and verifies the
-connection. Install the Google Cloud CLI first if `gcloud` is unavailable.
-On Arch/Omarchy, run `yay -S google-cloud-cli` to install it.
-
-The project must already exist; pass it explicitly as above, or set it with
-`gcloud config set project PROJECT_ID`. To replace a non-working or old key:
+`beckon setup-api-key` creates the key for you instead of pasting one. It signs
+in to Google Cloud if needed, enables the Gemini Developer API, creates a
+**standard** key restricted to `generativelanguage.googleapis.com`, saves it at
+`~/.config/beckon/api_key` with `0600` permissions, and verifies it:
 
 ```bash
-beckon setup-api-key --project PROJECT_ID --rotate
+beckon setup-api-key --project PROJECT_ID          # --rotate replaces an old key
 ```
 
-Do not restrict the key only to Vertex AI: it needs access to the Gemini
-Developer API. Keys bound to a service account can also be subject to
-organization policies, which complicates changing their restrictions. The
-**Test connection** button in `beckon ui` checks access without displaying
-the key.
+It needs the Google Cloud CLI (`yay -S google-cloud-cli`) and a project that
+already exists — pass it above, or set it with `gcloud config set project`.
+Which pricing tier you land on depends on whether that project has an active
+billing account, not on how the key was made, so a project you already pay for
+will bill this usage too.
+
+Do not restrict the key only to Vertex AI: it needs the Gemini Developer API.
+Keys bound to a service account can also fall under organization policies, which
+makes changing their restrictions awkward. The **Test connection** button in
+`beckon ui` checks access without ever displaying the key.
 
 `beckon setup` appends the binding to `~/.config/hypr/bindings.lua`, backs the
 file up first, and refuses to take a key that is already spoken for. To do it by

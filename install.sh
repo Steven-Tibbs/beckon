@@ -59,10 +59,11 @@ echo
 echo "Installed to $DEST"
 echo
 echo "Next:"
-echo "  1. beckon setup-api-key --project PROJECT_ID  — create and test a Gemini API key"
-echo "  2. beckon ui        — inspect connection, model, voice, and tools"
-echo "  3. beckon setup     — bind a key (F8 by default; 'beckon setup F7' for another)"
-echo "  4. press that key   — or run 'beckon' to start a session in the terminal"
+echo "  1. beckon ui        — paste your Gemini API key, then hit Test connection"
+echo "  2. beckon setup     — bind a key (F8 by default; 'beckon setup F7' for another)"
+echo "  3. press that key   — or run 'beckon' to start a session in the terminal"
+echo
+echo "Already on Google Cloud? 'beckon setup-api-key --project ID' makes the key for you."
 echo
 echo "To let it read a whole page or email without scrolling (optional):"
 echo "  gsettings set org.gnome.desktop.interface toolkit-accessibility true"
