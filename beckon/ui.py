@@ -222,8 +222,8 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/api/key":
             key = (body.get("key") or "").strip()
-            if not key:
-                return self._send({"error": "enter an API key"}, 400)
+            if len(key) < 20:
+                return self._send({"error": "that doesn't look like a key (too short)"}, 400)
             CONFIG.mkdir(parents=True, exist_ok=True)
             KEYFILE.write_text(key)
             KEYFILE.chmod(0o600)

@@ -29,13 +29,13 @@ Independent project built for Omarchy users — not affiliated with Omarchy, Hyp
    the AUR, so `python-google-genai` must already be installed (step 1).
    Without makepkg, `cd beckon && ./install.sh` installs into `~/.local`.
    Check: `command -v beckon` resolves, and Beckon appears in the app grid.
-3. API key. Prefer `beckon setup-api-key --project PROJECT_ID`. It uses the
-   user's authenticated Google Cloud CLI to enable the Gemini Developer API,
-   create a standard key restricted to `generativelanguage.googleapis.com`,
-   save it at `~/.config/beckon/api_key` (0600), and make a non-sensitive
-   connection check. It must never create a service-account-bound authorization
-   key. Check: its final line is `Gemini API connection confirmed.` A user can
-   also paste an existing standard key in `beckon ui` and click Test connection.
+3. API key. Never handle it yourself — tell the user to run `beckon ui` and
+   paste it, or to write it themselves:
+   `install -m 600 /dev/null ~/.config/beckon/api_key` then edit the file.
+   Check: `wc -c < ~/.config/beckon/api_key` is roughly 39; keys start `AIza`.
+   If they already use Google Cloud, tell them `beckon setup-api-key --project
+   ID` can create one — but let THEM run it. It opens a Google sign-in, and an
+   agent should never start an auth flow or touch a user's credentials.
 4. Keybinding: `beckon setup` (or `beckon setup F7` for another key). It appends
    to `~/.config/hypr/bindings.lua`, backs it up, and refuses a key that is
    already bound. Check `hyprctl configerrors` is empty afterwards.
